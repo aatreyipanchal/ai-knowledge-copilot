@@ -1,5 +1,5 @@
 import chromadb
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 
 CHROMA_PATH = "./chroma_db"
@@ -16,6 +16,9 @@ def get_vectorstore():
         embedding_function=embeddings,
     )
 
-def get_retriever(k: int = 3):
+def get_retriever(k: int = 3, filename: str = None):
     vectorstore = get_vectorstore()
-    return vectorstore.as_retriever(search_kwargs={"k": k})
+    search_kwargs = {"k": k}
+    if filename:
+        search_kwargs["filter"] = {"source": filename}
+    return vectorstore.as_retriever(search_kwargs=search_kwargs)

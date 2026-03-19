@@ -18,8 +18,19 @@ class RouterAgent(BaseAgent):
     def __init__(self):
         super().__init__(model_name="llama-3.1-8b-instant", temperature=0)
 
-    def route(self, question: str) -> str:
+    def route(self, question: str, filename: str = None) -> str:
         """Returns 'RAG', 'DATA', 'IMAGE', or 'RESEARCH'"""
+        
+        # Extension-based routing is a strong signal
+        if filename:
+            ext = filename.lower()
+            if ext.endswith(".pdf"):
+                return "RAG"
+            if ext.endswith(".csv"):
+                return "DATA"
+            if ext.endswith((".png", ".jpg", ".jpeg")):
+                return "IMAGE"
+
         response = self.llm.invoke(ROUTE_PROMPT.format(question=question))
         route = response.content.strip().upper()
 
@@ -35,6 +46,6 @@ class RouterAgent(BaseAgent):
             return "RESEARCH"
         return route
 
-def route_query(question: str) -> str:
+def route_query(question: str, filename: str = None) -> str:
     router = RouterAgent()
-    return router.route(question)
+    return router.route(question, filename=filename)

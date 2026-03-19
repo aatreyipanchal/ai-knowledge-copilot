@@ -36,7 +36,7 @@ class ChatResponse(BaseModel):
     answer: str
     route: str
     sources: list[str] = []
-    chart: Optional[str] = None   # ← was str, now Optional[str]
+    charts: list[str] = []  # Changed from single 'chart' to list 'charts'
 
 @app.get("/")
 def health():
@@ -63,8 +63,15 @@ async def upload_image(file: UploadFile = File(...)):
     if not file.filename.lower().endswith((".png", ".jpg", ".jpeg")):
         raise HTTPException(status_code=400, detail="Only PNG/JPG files allowed")
     content = await file.read()
+    img_path = os.path.join("uploads", file.filename)
+    with open(img_path, "wb") as f:
+        f.write(content)
     _image_store[file.filename] = content
     return {"message": f"Uploaded image '{file.filename}'", "filename": file.filename}
+
+UPLOAD_DIR = "uploads"
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
 
 @app.get("/files")
 def list_files():
@@ -87,8 +94,8 @@ async def chat(request: ChatRequest):
 
     db = SessionLocal()
     
-    # Route and run agents
-    route = route_query(question)
+    # Route and run agents with filename context
+    route = route_query(question, filename=request.filename)
 
     if route == "RAG":
         # Only filter by filename if it's a PDF
@@ -96,41 +103,55 @@ async def chat(request: ChatRequest):
         result = run_rag_agent(question, session_id=request.session_id, filename=rag_file)
         answer = result["answer"]
         sources = result.get("sources", [])
-        chart = None
+        charts = []
     elif route == "DATA":
         # Only filter by filename if it's a CSV
         data_file = request.filename if request.filename and request.filename.lower().endswith(".csv") else None
         result = run_data_agent(question, session_id=request.session_id, filename=data_file)
         answer = result["answer"]
-        chart = result.get("chart")
+        charts = result.get("charts", []) # Get list of charts
         sources = []
     elif route == "IMAGE":
-        # Get the latest uploaded image if filename not provided
+        # Get image name
         img_name = request.filename
         if not img_name and _image_store:
             img_name = list(_image_store.keys())[-1]
+        elif not img_name:
+            # Try to find the latest image on disk
+            img_files = [f for f in os.listdir(UPLOAD_DIR) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+            if img_files:
+                img_name = sorted(img_files)[-1]
         
-        if img_name and img_name in _image_store:
-            result = run_vision_agent(_image_store[img_name], question, session_id=request.session_id)
+        # Ensure we have the bytes
+        img_bytes = _image_store.get(img_name)
+        if not img_bytes and img_name:
+            # Reload from disk
+            img_path = os.path.join(UPLOAD_DIR, img_name)
+            if os.path.exists(img_path):
+                with open(img_path, "rb") as f:
+                    img_bytes = f.read()
+                    _image_store[img_name] = img_bytes
+
+        if img_bytes:
+            result = run_vision_agent(img_bytes, question, session_id=request.session_id)
             answer = result["answer"]
         else:
             answer = "No image found to analyze. Please upload an image first."
-            # Manual save since run_vision_agent wasn't called
             from backend.agents.base_agent import BaseAgent
             BaseAgent().save_message(request.session_id, "user", question)
         sources = []
-        chart = None
+        charts = []
     else:
         result = run_research_agent(question, session_id=request.session_id)
         answer = result["answer"]
         sources = result.get("sources", [])
-        chart = None
+        charts = []
 
     # Save assistant message with metadata
     metadata = {
         "route": route,
         "sources": sources,
-        "chart": chart
+        "charts": charts if route == "DATA" else []
     }
     
     # We use the BaseAgent's save_message instance if needed, or just do it here
@@ -138,7 +159,7 @@ async def chat(request: ChatRequest):
     BaseAgent().save_message(request.session_id, "assistant", answer, metadata=metadata)
 
     db.close()
-    return ChatResponse(answer=answer, route=route, sources=sources, chart=chart)
+    return ChatResponse(answer=answer, route=route, sources=sources, charts=charts if route == "DATA" else [])
 
 @app.get("/chat/history/{session_id}")
 def get_chat_history(session_id: str):

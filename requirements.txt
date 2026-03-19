@@ -20,3 +20,5 @@ aiosqlite
 langchain-huggingface
 torch>=2.4.0
 torchvision
+seaborn
+matplotlib

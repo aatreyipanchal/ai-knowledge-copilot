@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
   Send, 
   Upload, 
@@ -46,7 +48,7 @@ function App() {
             content: msg.content,
             route: extra.route,
             sources: extra.sources,
-            chart: extra.chart
+            charts: extra.charts || (extra.chart ? [extra.chart] : [])
           };
         });
         setMessages(history);
@@ -131,14 +133,14 @@ function App() {
         filename: selectedFile
       });
 
-      const botMsg = {
+      const botMessage = {
         role: "assistant",
         content: response.data.answer,
         route: response.data.route,
-        chart: response.data.chart,
-        sources: response.data.sources
+        sources: response.data.sources,
+        charts: response.data.charts || []
       };
-      setMessages(prev => [...prev, botMsg]);
+      setMessages(prev => [...prev, botMessage]);
     } catch (err) {
       setMessages(prev => [...prev, {
         role: "assistant", 
@@ -240,10 +242,16 @@ function App() {
                   className={`message-wrapper ${msg.role}`}
                 >
                   <div className={`message glass-card ${msg.role === 'user' ? 'user-msg' : 'bot-msg'}`}>
-                    {msg.content}
-                    {msg.chart && (
-                      <div className="chart-container">
-                        <img src={`data:image/png;base64,${msg.chart}`} alt="Data Visualization" />
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                    {msg.charts && msg.charts.length > 0 && (
+                      <div className="charts-wrapper">
+                        {msg.charts.map((chart, idx) => (
+                          <div key={idx} className="chart-container">
+                            <img src={`data:image/png;base64,${chart}`} alt={`Visualization ${idx + 1}`} />
+                          </div>
+                        ))}
                       </div>
                     )}
                     {msg.sources && msg.sources.length > 0 && (
@@ -269,13 +277,22 @@ function App() {
             <div className="input-container glass-card">
               <div className="input-wrapper">
                 <Paperclip className="input-icon" />
-                <input 
-                  type="text" 
+                <textarea 
                   placeholder="Ask anything..." 
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
                   className="chat-input"
+                  rows="1"
                 />
                 <button className="send-btn" onClick={handleSend} disabled={loading}>
                   <Send size={18} />
@@ -288,21 +305,27 @@ function App() {
         {activeTab === "dashboard" && (
           <div className="dashboard-view container-scroll">
             <div className="dashboard-grid">
-              {messages.filter(m => m.chart).map((msg, i) => (
+              {messages.flatMap((m, msgIdx) => 
+                (m.charts || []).map((chart, chartIdx) => ({
+                  chart,
+                  content: m.content,
+                  id: `${msgIdx}-${chartIdx}`
+                }))
+              ).map((item, i) => (
                 <motion.div 
-                  key={i}
+                  key={item.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="dashboard-card glass-card"
                 >
                    <h3>Visualization {i+1}</h3>
                    <div className="chart-preview">
-                     <img src={`data:image/png;base64,${msg.chart}`} alt="Chart" />
+                     <img src={`data:image/png;base64,${item.chart}`} alt="Chart" />
                    </div>
-                   <p className="chart-context">{msg.content.substring(0, 100)}...</p>
+                   <p className="chart-context">{item.content.substring(0, 100)}...</p>
                 </motion.div>
               ))}
-              {messages.filter(m => m.chart).length === 0 && (
+              {messages.every(m => !m.charts || m.charts.length === 0) && (
                 <div className="empty-state">
                   <BarChart3 size={48} />
                   <p>No visualizations yet. Ask the Data Agent to generate charts!</p>

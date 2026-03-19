@@ -104,6 +104,73 @@
   border-top: 1px solid var(--glass-border);
 }
 
+/* Markdown Styles */
+.message h2 {
+  font-size: 1.2rem;
+  margin: 16px 0 8px 0;
+  color: var(--primary);
+}
+
+.message p {
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.message ul, .message ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.message table {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+
+.message th, .message td {
+  padding: 10px 12px;
+  border: 1px solid var(--glass-border);
+  text-align: left;
+}
+
+.message th {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.message pre {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  border-radius: 12px;
+  overflow-x: auto;
+  margin: 16px 0;
+  border: 1px solid var(--glass-border);
+}
+
+.message code {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.message pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.message tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
+}
+
 /* Chat Area Styling */
 .chat-area {
   flex-grow: 1;
@@ -199,9 +266,13 @@
 }
 
 .message {
-  max-width: 70%;
+  max-width: 75%;
   padding: 16px 24px;
   position: relative;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .user-msg {
@@ -213,8 +284,14 @@
   border-radius: 20px 20px 20px 4px;
 }
 
-.chart-container {
+.charts-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-top: 16px;
+}
+
+.chart-container {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--glass-border);
@@ -262,8 +339,9 @@
 
 /* Input Area Styling */
 .input-container {
-  height: 80px;
-  padding: 0 32px;
+  min-height: 80px;
+  height: auto;
+  padding: 16px 32px;
   display: flex;
   align-items: center;
 }
@@ -290,6 +368,15 @@
   color: white;
   outline: none;
   font-size: 1rem;
+  font-family: inherit;
+  resize: none;
+  padding: 8px 0;
+  max-height: 150px;
+  line-height: 1.5;
+}
+
+.chat-input::placeholder {
+  color: var(--text-muted);
 }
 
 .send-btn {

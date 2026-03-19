@@ -12,9 +12,13 @@ class ResearchAgent(BaseAgent):
     def search(self, question: str, session_id: str = "default_session") -> dict:
         search_results = self.search_tool.run(question)
         
-        system_prompt = f"""You are a research assistant for an AI Knowledge Copilot. 
-        Based on the web search results, provide a clear, concise, and accurate answer.
-        Always cite the search results as your source.
+        system_prompt = f"""You are a Premium Research Assistant. 
+        Based on the web search results, provide a clear, concise, and structured answer.
+        
+        Guidelines:
+        - Use ## Headings to organize your findings.
+        - Use **Markdown Tables** for data-heavy facts.
+        - Use [Source Name](URL) for inline citations where possible.
         
         Search Results:
         {search_results}

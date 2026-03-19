@@ -1,6 +1,6 @@
 from backend.agents.base_agent import BaseAgent
 import pandas as pd
-import io, base64, os
+import io, base64, os, contextlib
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -16,12 +16,16 @@ class DataAgent(BaseAgent):
         super().__init__(temperature=0)
 
     def analyze(self, question: str, session_id: str = "default_session", filename: str = None) -> dict:
-        if not filename or filename == "":
+        if not filename:
             # Try to get the latest file from disk
             files = [f for f in os.listdir(UPLOAD_DIR) if f.endswith(".csv")]
             if not files:
-                return {"answer": "No CSV file loaded. Please upload a CSV first.", "chart": None}
+                return {"answer": "No CSV file loaded. Please upload a CSV first.", "charts": []}
             filename = sorted(files)[-1] # Simple latest logic
+        
+        # If a filename was provided but it's not a CSV, we shouldn't continue
+        if not filename.lower().endswith(".csv"):
+             return {"answer": f"Selected file '{filename}' is not a CSV. Data Agent only works with CSVs.", "charts": []}
 
         df = _dataframe_store.get(filename)
         if df is None:
@@ -31,24 +35,60 @@ class DataAgent(BaseAgent):
                 df = pd.read_csv(file_path)
                 _dataframe_store[filename] = df
             else:
-                return {"answer": f"File '{filename}' not found in storage.", "chart": None}
+                return {"answer": f"File '{filename}' not found in storage.", "charts": []}
 
-        schema_info = f"Columns: {list(df.columns)}\nShape: {df.shape}\nSample:\n{df.head(3).to_string()}"
+        # Enrich diagnostic info
+        buffer = io.StringIO()
+        df.info(buf=buffer)
+        info_str = buffer.getvalue()
+        
+        describe_str = df.describe(include='all').to_string()
+        null_str = df.isnull().sum().to_string()
+        
+        enriched_info = f"""
+        - Data Types and Info: 
+        {info_str}
+        - Null values: 
+        {null_str}
+        - Statistical Summary: 
+        {describe_str}
+        - Data Sample:
+        {df.head(5).to_string()}
+        """
 
-        prompt = f"""You are a Python data analyst for an AI Knowledge Copilot. 
-        Given this dataset info, write Python code to analyze it and answer the user's question clearly.
-        If a chart or graph is requested, use matplotlib.pyplot (already imported as plt) to draw it. 
-        The dataframe is already loaded as `df`. 
+        prompt = f"""You are a World-Class Data Scientist and Lead Analyst for an AI Knowledge Copilot. 
+        Analyze the dataset based on the user's specific intent.
         
-        Dataset info:
-        {schema_info}
+        IMPORTANT RULES:
+        1. DATASET: Already loaded for you in variable `df`. DO NOT use `pd.read_csv`.
+        2. USER INTENT (CRITICAL): 
+           - If the user asks a simple, specific question (e.g., 'show first 5 rows', 'column list', 'count of nulls', 'mean of X'), provide ONLY that information briefly. 
+           - If the user asks for 'EDA', 'Analysis', or any open-ended question, THEN perform a full DEEP analysis.
+        3. ANALYSIS QUALITY (for deep analysis):
+           - Provide Summary Statistics and Categorical Analysis.
+           - Include Correlation Matrices with insights.
+           - If a target exists (e.g., 'Survived'), analyze its relationship with other features.
+        4. VISUALIZATION:
+           - Generate charts ONLY if they add value or are explicitly requested. 
+           - For simple data retrieval (like 'first 5 rows'), DO NOT generate charts.
+           - Use `plt.figure(figsize=(...))` for each plot. 
+           - If plotting two columns, ensure they are aligned and handled for NaNs: `df.dropna(subset=['A', 'B'])`.
         
-        Question: {question}
+        Dataset Context:
+        - Filename: {filename}
+        {enriched_info}
         
-        Format your response exactly as follows:
-        Answer: <your short text answer>
+        User Question: {question}
+        
+        Format your response as follows:
+        Answer: 
+        ## [Title]
+        [Detailed markdown response]
+        
         ```python
-        <your pandas/matplotlib python code here>
+        import matplotlib.pyplot as plt
+        # Use 'df' directly
+        [your python code here for calculation or plotting]
         ```
         """
         
@@ -62,21 +102,35 @@ class DataAgent(BaseAgent):
             answer_text = parts[0].replace("Answer:", "").strip()
             code_block = parts[1].split("```")[0].strip()
         
-        chart_base64 = None
-        if code_block:
+        charts_base64 = []
+        captured_output = ""
+        
+        if code_block and code_block.strip() and len(code_block.strip().split('\n')) > 1: # Check if there's more than just a placeholder
             local_env = {'df': df, 'pd': pd, 'plt': plt}
+            output_buffer = io.StringIO()
             try:
-                exec(code_block, local_env)
-                if plt.get_fignums():
+                with contextlib.redirect_stdout(output_buffer):
+                    exec(code_block, local_env)
+                
+                captured_output = output_buffer.getvalue()
+                
+                # Capture ALL open figures
+                for i in plt.get_fignums():
+                    plt.figure(i)
                     buf = io.BytesIO()
                     plt.savefig(buf, format='png', bbox_inches='tight')
                     buf.seek(0)
-                    chart_base64 = base64.b64encode(buf.read()).decode('utf-8')
-                    plt.close('all')
+                    charts_base64.append(base64.b64encode(buf.read()).decode('utf-8'))
+                plt.close('all')
             except Exception as e:
                 answer_text += f"\n\n(Error executing data logic: {e})"
+            finally:
+                output_buffer.close()
+        
+        if captured_output:
+            answer_text += f"\n\n**Analysis Results:**\n```text\n{captured_output}\n```"
                 
-        return {"answer": answer_text, "chart": chart_base64}
+        return {"answer": answer_text, "charts": charts_base64}
 
 def run_data_agent(question: str, session_id: str = "default_session", filename: str = None) -> dict:
     agent = DataAgent()

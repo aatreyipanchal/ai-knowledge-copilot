@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage
 class VisionAgent(BaseAgent):
     def __init__(self):
         # Using a vision-capable model
-        super().__init__(model_name="llama-3.2-11b-vision-preview", temperature=0.2)
+        super().__init__(model_name="meta-llama/llama-4-scout-17b-16e-instruct", temperature=0.2)
 
     def describe_image(self, image_bytes: bytes, question: str = "What is in this image?", session_id: str = "default_session") -> dict:
         """

@@ -12,9 +12,14 @@ class RAGAgent(BaseAgent):
         context = "\n\n".join([doc.page_content for doc in docs])
         sources = list({doc.metadata.get("source", "unknown") for doc in docs})
         
-        system_prompt = f"""You are a helpful AI Knowledge Copilot. 
+        system_prompt = f"""You are a Premium AI Knowledge Copilot. 
         Answer the question using ONLY the provided context. 
-        If the answer isn't in the context, say "I couldn't find that in the uploaded documents."
+        
+        Guidelines:
+        - Use ## Headings for major points.
+        - Use **Markdown Tables** or bullet points for comparisons or lists.
+        - Cite your sources clearly at the end in a **Sources** section.
+        - If the answer isn't in the context, say "I couldn't find that in the uploaded documents."
         
         Context:
         {context}

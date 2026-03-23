@@ -31,6 +31,7 @@ coverage.xml
 chroma_db/
 *.db
 *.sqlite
+ai_copilot.db
 
 # Project Specific
 dist/

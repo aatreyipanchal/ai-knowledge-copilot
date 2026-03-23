@@ -4,6 +4,10 @@ import base64
 import json
 import uuid
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables (for local development)
+load_dotenv()
 
 # Add the current directory to sys.path to ensure backend imports work
 import sys

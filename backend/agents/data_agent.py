@@ -83,12 +83,16 @@ class DataAgent(BaseAgent):
         Format your response as follows:
         Answer: 
         ## [Title]
-        [Detailed markdown response]
+        [Detailed markdown response with insights, bullet points, and **markdown tables** for key data]
+        
+        [If applicable: "Based on the analysis, here is what I found..."]
         
         ```python
         import matplotlib.pyplot as plt
-        # Use 'df' directly
-        [your python code here for calculation or plotting]
+        # Use 'df' directly. 
+        # For calculations, you can print() results to help your summary, 
+        # but the FINAL answer must be in the markdown section above.
+        [your python code here]
         ```
         """
         
@@ -127,8 +131,11 @@ class DataAgent(BaseAgent):
             finally:
                 output_buffer.close()
         
-        if captured_output:
-            answer_text += f"\n\n**Analysis Results:**\n```text\n{captured_output}\n```"
+        # We only show captured output if it's small or explicitly needed.
+        # Otherwise, the LLM should have summarized it in the answer.
+        if captured_output and len(captured_output.strip()) > 0:
+            if len(captured_output.split('\n')) < 20: # Only show small text outputs
+                 answer_text += f"\n\n**Additional Details:**\n```text\n{captured_output}\n```"
                 
         return {"answer": answer_text, "charts": charts_base64}
 

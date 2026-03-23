@@ -40,6 +40,19 @@ st.markdown("""
         background-color: #161b22;
         border-right: 1px solid #30363d;
     }
+    /* Ensure all sidebar text is visible */
+    [data-testid="stSidebar"] .stMarkdown p, 
+    [data-testid="stSidebar"] .stHeader, 
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] .stMarkdown span {
+        color: #ffffff !important;
+    }
+    /* Universal text visibility for main area if needed */
+    .stMarkdown, .stSubheader, .stTitle {
+        color: #e6edf3;
+    }
     .stButton>button {
         width: 100%;
         border-radius: 5px;

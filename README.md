@@ -100,13 +100,5 @@ streamlit run streamlit_app.py
 ### 🌍 Global Research
 "What is the current market sentiment for NVIDIA stock according to latest news?"
 
----
-
-## 📝 Resume Summary for Developers
-
-> Engineered a sophisticated Multi-Agent AI system using a modular architecture for Document Intelligence, Data Analysis, and Visual Reasoning. Implemented a RAG pipeline with ChromaDB and optimized inference using LLaMA 3.3 on Groq. Designed a persistent chat system with SQLite and a high-performance Streamlit UI, achieving zero-cost deployment and sub-second response times for complex queries.
-
----
-
 ## 📜 License
 Integrated under the MIT License. See [LICENSE](LICENSE) for details.

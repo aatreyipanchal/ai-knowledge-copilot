@@ -32,43 +32,53 @@ st.set_page_config(
 # Custom CSS for Premium Look
 st.markdown("""
 <style>
-    .main {
-        background-color: #0e1117;
+    /* Force Dark Theme Main Background */
+    [data-testid="stAppViewContainer"] {
+        background-color: #0e1117 !important;
+        color: #e6edf3 !important;
     }
+    [data-testid="stHeader"] {
+        background-color: rgba(0,0,0,0) !important;
+    }
+    
     .stChatMessage {
         border-radius: 10px;
         padding: 15px;
         margin-bottom: 10px;
     }
-    .stSidebar {
-        background-color: #161b22;
-        border-right: 1px solid #30363d;
+    
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #161b22 !important;
+        border-right: 1px solid #30363d !important;
     }
-    /* Ensure all sidebar text is visible */
-    [data-testid="stSidebar"] .stMarkdown p, 
-    [data-testid="stSidebar"] .stHeader, 
-    [data-testid="stSidebar"] h1, 
-    [data-testid="stSidebar"] h2, 
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] .stMarkdown span {
+    
+    /* Universal Text Color Overrides for Visibility */
+    [data-testid="stSidebar"] *, 
+    [data-testid="stAppViewContainer"] .stMarkdown, 
+    [data-testid="stAppViewContainer"] h1, 
+    [data-testid="stAppViewContainer"] h2, 
+    [data-testid="stAppViewContainer"] h3, 
+    [data-testid="stAppViewContainer"] p, 
+    [data-testid="stAppViewContainer"] span,
+    [data-testid="stAppViewContainer"] label {
         color: #ffffff !important;
     }
-    /* Universal text visibility for main area if needed */
-    .stMarkdown, .stSubheader, .stTitle {
-        color: #e6edf3;
-    }
+    
     .stButton>button {
         width: 100%;
         border-radius: 5px;
-        background-color: #238636;
-        color: white;
+        background-color: #238636 !important;
+        color: white !important;
     }
+    
     .stHeader {
-        color: #58a6ff;
+        color: #58a6ff !important;
     }
+    
     .source-tag {
         background-color: #21262d;
-        color: #8b949e;
+        color: #8b949e !important;
         padding: 2px 8px;
         border-radius: 12px;
         font-size: 0.8em;

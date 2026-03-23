@@ -32,57 +32,32 @@ st.set_page_config(
 # Custom CSS for Premium Look
 st.markdown("""
 <style>
-    /* Force Dark Theme Main Background */
-    [data-testid="stAppViewContainer"] {
-        background-color: #0e1117 !important;
-        color: #e6edf3 !important;
-    }
-    [data-testid="stHeader"] {
-        background-color: rgba(0,0,0,0) !important;
-    }
-    
+    /* Custom Chat Message Styling */
     .stChatMessage {
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 10px;
+        border-radius: 12px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        border: 1px solid #30363d;
     }
     
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #161b22 !important;
-        border-right: 1px solid #30363d !important;
-    }
-    
-    /* Universal Text Color Overrides for Visibility */
-    [data-testid="stSidebar"] *, 
-    [data-testid="stAppViewContainer"] .stMarkdown, 
-    [data-testid="stAppViewContainer"] h1, 
-    [data-testid="stAppViewContainer"] h2, 
-    [data-testid="stAppViewContainer"] h3, 
-    [data-testid="stAppViewContainer"] p, 
-    [data-testid="stAppViewContainer"] span,
-    [data-testid="stAppViewContainer"] label {
-        color: #ffffff !important;
-    }
-    
+    /* Button Styling */
     .stButton>button {
         width: 100%;
-        border-radius: 5px;
+        border-radius: 8px;
         background-color: #238636 !important;
         color: white !important;
+        border: none;
     }
     
-    .stHeader {
-        color: #58a6ff !important;
-    }
-    
+    /* Source Tag Styling */
     .source-tag {
         background-color: #21262d;
         color: #8b949e !important;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.8em;
-        margin-right: 5px;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        margin-right: 8px;
+        border: 1px solid #30363d;
     }
 </style>
 """, unsafe_allow_html=True)
